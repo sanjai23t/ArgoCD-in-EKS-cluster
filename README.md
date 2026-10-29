@@ -1,212 +1,224 @@
-# ArgoCD-in-EKS-cluster
-GitOps-Based Application Deployment Using GitHub, Argo CD, and Amazon EKS
-A hands-on DevOps project where I containerized a custom frontend application, deployed it on Amazon EKS, and used Argo CD to manage Kubernetes deployments through GitOps.
+# 🚀 GitOps Deployment on AWS EKS Using Docker, Kubernetes & Argo CD
 
-📌 Project Overview
-The goal of this project was to understand how containerization, Kubernetes orchestration, and GitOps work together in a practical deployment workflow.
+A hands-on DevOps project demonstrating GitOps-based application deployment using GitHub, Docker, Kubernetes, Argo CD, and Amazon EKS.
 
-I built a custom frontend using HTML and CSS, packaged it into a Docker image using Nginx, published the image to Docker Hub, and deployed it to an Amazon EKS cluster using Kubernetes manifests managed through Argo CD.
+## 📌 Project Overview
 
-🛠️ Tech Stack
-Technology	Purpose
-AWS EKS	Managed Kubernetes cluster
-Docker	Containerization
-Docker Hub	Container image registry
-Kubernetes	Application orchestration
-Argo CD	GitOps continuous delivery
-Git & GitHub	Version control and configuration management
-Nginx	Static frontend web server
-eksctl	EKS cluster management
-kubectl	Kubernetes resource management
-🏗️ Architecture
-                Developer
-                    |
-                    v
-             Custom Frontend
-               HTML + CSS
-                    |
-                    v
-               Docker Build
-                    |
-                    v
-                Docker Hub
-                    |
-                    v
-              GitHub Repository
-             /                \
-     frontend/                k8s/
-   Dockerfile              deployment.yaml
-   index.html                   |
-                                v
-                            Argo CD
-                                |
-                                v
-                         Amazon EKS
-                                |
-                         Kubernetes Deployment
-                                |
-                         Application Pods
-                                |
-                                v
-                       Kubernetes Service
-                                |
-                                v
-                        Custom Frontend
-The Docker image is built and published separately from the Kubernetes manifests. Argo CD monitors the Git repository and reconciles the Kubernetes resources defined in the configured application path.
+The goal of this project was to understand how containerization, Kubernetes orchestration, and GitOps work together in a real-world deployment workflow.
 
-📁 Repository Structure
-argocd-demo/
+I created an Amazon EKS cluster, developed a custom frontend application using HTML and CSS, containerized it using Docker and Nginx, and published the Docker image to Docker Hub. I then stored Kubernetes manifests in GitHub and configured Argo CD to synchronize the manifests with my EKS cluster.
+
+Argo CD manages the desired application state defined in Git, enabling consistent deployments and easier configuration management.
+
+## 🛠️ Tech Stack
+
+| Technology | Purpose |
+|---|---|
+| AWS EKS | Managed Kubernetes cluster |
+| Docker | Containerization |
+| Docker Hub | Container image registry |
+| Kubernetes | Application orchestration |
+| Argo CD | GitOps continuous delivery |
+| Git & GitHub | Version control and configuration management |
+| Nginx | Frontend web server |
+| eksctl | EKS cluster management |
+| kubectl | Kubernetes resource management |
+
+## 🏗️ Architecture & Working Flow
+
+```text
+Developer
+    |
+    v
+Custom Frontend (HTML + CSS)
+    |
+    v
+Docker Build
+    |
+    v
+Docker Hub
+    |
+    v
+GitHub Repository
+    |
+    v
+Argo CD
+    |
+    v
+Amazon EKS
+    |
+    v
+Kubernetes Deployment
+    |
+    v
+Frontend Pods
+    |
+    v
+Kubernetes LoadBalancer Service
+    |
+    v
+Web Application
+```
+
+**How it works:**
+
+1. The frontend application is packaged into a Docker image and pushed to Docker Hub.
+2. Kubernetes manifests are committed and pushed to GitHub.
+3. Argo CD monitors the configured GitHub repository and manifest directory.
+4. Argo CD synchronizes the desired configuration with Amazon EKS.
+5. Kubernetes creates and maintains the application Pods.
+6. The LoadBalancer Service provides external access to the frontend.
+
+## 📁 Repository Structure
+
+```text
+ArgoCD-in-EKS-cluster/
 ├── frontend/
 │   ├── Dockerfile
 │   └── index.html
 ├── k8s/
-│   └── deployment.yaml
+│   ├── deployment.yaml
+│   └── service.yaml
 └── README.md
-⚙️ Implementation Steps
-1. Created the Amazon EKS Cluster
-I created an EKS cluster using eksctl and configured kubectl to interact with the cluster.
+```
 
-I also explored the relationship between the EKS control plane, worker nodes, and application workloads.
+## ⚙️ Implementation Steps
 
-2. Installed Argo CD
-I deployed Argo CD in a dedicated Kubernetes namespace:
+### 1. Created the Amazon EKS Cluster
 
-kubectl create namespace argocd
-I then installed Argo CD and accessed its web interface to manage Kubernetes applications.
+Created an EKS cluster in the Hyderabad region using `eksctl`.
 
-3. Built a Custom Frontend Image
-I created a static frontend application and used Nginx to serve it.
+```bash
+eksctl create cluster \
+  --name sanjai-js-k8s \
+  --region ap-south-2 \
+  --nodes 2 \
+  --node-type t3.small
+```
 
-Dockerfile:
+Configured local Kubernetes access:
 
-FROM nginx:alpine
-COPY index.html /usr/share/nginx/html/index.html
-EXPOSE 80
-I built the Docker image from the repository root:
+```bash
+aws eks update-kubeconfig \
+  --region ap-south-2 \
+  --name sanjai-js-k8s
+```
 
-docker build -t vicky742/argocd-frontend:1.0 ./frontend
-I tested the container locally before publishing the image.
+Verified the cluster using `kubectl get nodes`.
 
-4. Published the Image to Docker Hub
-After testing the image, I authenticated with Docker Hub and pushed it to my repository:
+### 2. Created the GitHub Repository
 
+Created the repository `ArgoCD-in-EKS-cluster`, cloned it locally, and organized the project into `frontend/` and `k8s/` directories.
+
+### 3. Containerized the Frontend
+
+Created a custom HTML frontend and a Dockerfile using Nginx to serve the application.
+
+Built the image from the repository root:
+
+```bash
+docker build -t sanjai2023/frontend:v1 ./frontend
+```
+
+### 4. Published the Image to Docker Hub
+
+Authenticated with Docker Hub and pushed the image:
+
+```bash
 docker login
-docker push vicky742/argocd-frontend:1.0
-This made the custom frontend image available for Kubernetes to pull.
+docker push sanjai2023/frontend:v1
+```
 
-5. Created Kubernetes Manifests
-I defined the application using Kubernetes manifests.
+This made the image available for Kubernetes to pull.
 
-The Deployment specifies the application image and desired replica count. The Service provides a stable internal endpoint for accessing the application pods.
+### 5. Created Kubernetes Manifests
 
-The project uses:
+Created `deployment.yaml` and `service.yaml` inside the `k8s/` directory.
 
-Deployment: nginx-app
-Service: nginx-service
-Application label: app=nginx-app
-Container image: vicky742/argocd-frontend:1.0
-Desired replicas: 5
-The actual number of running replicas depends on the cluster's current state and available resources.
+- **Deployment:** `frontend-deployment`
+- **Desired replicas:** 2
+- **Container image:** `sanjai2023/frontend:v1`
+- **Service:** `frontend-service`
+- **Service type:** `LoadBalancer`
 
-6. Connected GitHub to Argo CD
-I configured an Argo CD Application to monitor the GitHub repository's k8s directory and deploy the manifests to the cluster's default namespace.
+The Deployment manages the frontend Pods, while the Service provides a stable endpoint and external access through an AWS load balancer.
 
-The application configuration uses:
+### 6. Configured Argo CD
 
-Source repository: My GitHub argocd-demo repository
-Manifest path: k8s
-Destination: The in-cluster Kubernetes API
-Destination namespace: default
-Argo CD uses this configuration to compare the desired state stored in Git with the live Kubernetes resources.
+Installed Argo CD in the Kubernetes cluster and configured the Argo CD Application named `frontend-app`.
 
-7. Updated the Deployment to Use My Custom Image
-Initially, I used the standard Nginx image while setting up the Kubernetes deployment.
+Application configuration:
 
-I then built and published my custom frontend image and updated the Deployment manifest to use:
+- **GitHub repository:** `https://github.com/sanjai23t/ArgoCD-in-EKS-cluster.git`
+- **Branch:** `main`
+- **Manifest path:** `k8s`
+- **Destination:** Amazon EKS cluster
+- **Namespace:** `default`
 
-image: vicky742/argocd-frontend:1.0
-After committing and pushing the manifest changes, I verified the image configured in the live Deployment.
+Argo CD monitors the configured repository path and synchronizes the Kubernetes manifests with the live cluster.
 
-🔄 GitOps Workflow
-The project demonstrates the following workflow:
+### 7. Verified the Deployment
 
-Create or update application code.
-Build and publish the Docker image.
-Update the Kubernetes manifest in Git.
-Commit and push changes to GitHub.
-Allow Argo CD to detect and synchronize manifest changes.
-Verify the resulting Kubernetes deployment.
-With automated synchronization and self-healing enabled, Argo CD can reconcile supported live resource changes with the desired configuration stored in Git.
+Verified that the Argo CD application reached `Synced` and `Healthy` status and that both frontend replicas were running.
 
-🔍 Verification Commands
-Check the Kubernetes Deployment:
+## 🔄 GitOps Workflow
 
-kubectl get deployment nginx-app
-Check application pods:
+When Kubernetes configuration changes are committed and pushed to GitHub, Argo CD detects the changes and reconciles the cluster with the desired state defined in Git.
 
-kubectl get pods -l app=nginx-app
-Check the Service:
+For a new frontend version, the workflow is:
 
-kubectl get svc nginx-service
-Check the deployed container image:
+1. Update the application code.
+2. Build and push a new Docker image tag.
+3. Update the image tag in `k8s/deployment.yaml`.
+4. Commit and push the changes to GitHub.
+5. Allow Argo CD to synchronize the updated manifest.
+6. Verify the rollout and application health.
 
-kubectl get deployment nginx-app \
+**Note:** Publishing a new Docker image alone does not automatically update the Deployment when the manifest still references the previous tag. The manifest must be updated, or a separate image automation tool must be configured.
+
+## 🔍 Verification Commands
+
+```bash
+kubectl get nodes
+kubectl get deployments
+kubectl get pods -l app=frontend
+kubectl get svc frontend-service
+kubectl rollout status deployment/frontend-deployment
+kubectl get applications -n argocd
+```
+
+To inspect the deployed image:
+
+```bash
+kubectl get deployment frontend-deployment \
   -o jsonpath='{.spec.template.spec.containers[0].image}'
-Check rollout progress:
+```
 
-kubectl rollout status deployment/nginx-app
-Check Argo CD application status:
+## 📚 Key Learnings
 
-kubectl get application nginx-app -n argocd
-To access the frontend locally through port-forwarding:
+- Creating and managing an Amazon EKS cluster.
+- Building and publishing Docker images.
+- Deploying applications using Kubernetes Deployments and Services.
+- Managing Kubernetes manifests with Git and GitHub.
+- Configuring Argo CD for GitOps-based synchronization.
+- Understanding desired-state reconciliation and deployment verification.
+- Troubleshooting application and cluster configuration issues.
 
-kubectl port-forward svc/nginx-service 8080:80
-Then open http://localhost:8080 in your browser.
+## 🚀 Future Improvements
 
-🧩 Challenges and Troubleshooting
-During this project, I encountered and worked through several practical issues:
+- Automate Docker image builds using a CI pipeline.
+- Configure automated image version updates.
+- Add Prometheus and Grafana monitoring.
+- Configure Ingress and HTTPS.
+- Improve IAM permissions and container security.
+- Practice rolling updates and rollback scenarios.
 
-EKS node readiness: Understanding why an active EKS cluster does not necessarily mean application workloads can be scheduled.
-Docker image references: Ensuring the correct Docker Hub repository and tag are used.
-Git staging: Correcting file paths and staging the frontend/ and k8s/ directories separately.
-Git line endings: Understanding that LF-to-CRLF warnings on Windows are generally informational.
-Manifest synchronization: Checking the live Deployment image rather than assuming local changes had already been applied.
-Command syntax: Correcting a JSONPath typo that prevented the expected image output from appearing.
-These troubleshooting exercises helped me understand the importance of verifying each stage instead of assuming the workflow has succeeded.
+## 💡 Conclusion
 
-📚 Key Learnings
-Through this project, I gained hands-on exposure to:
+This project helped me understand how Docker, Kubernetes, Amazon EKS, GitHub, and Argo CD work together to deliver applications using GitOps principles. It strengthened my practical understanding of containerization, Kubernetes deployment, version control, and automated configuration synchronization.
 
-Docker image creation, testing, and publishing
-Kubernetes Deployments, Pods, and Services
-Amazon EKS fundamentals
-Git and GitHub-based configuration management
-Argo CD application synchronization
-GitOps desired-state reconciliation
-Kubernetes rollout verification
-Troubleshooting deployment and configuration issues
-🚧 Future Improvements
-I plan to extend the project with:
+**Author:** Sanjai M.
 
-Version 2.0 image releases
-Rolling updates and rollback testing
-Deliberate failure scenarios and recovery
-Prometheus and Grafana monitoring
-Ingress and HTTPS configuration
-CI automation for building and testing images
-Container image scanning
-Improved IAM, secrets, and Kubernetes security
-These are planned improvements, not features claimed as completed.
+**Focus:** DevOps | AWS | Kubernetes | Docker | Argo CD | GitOps
 
-💡 Final Thoughts
-This project helped me connect Docker, Kubernetes, AWS EKS, and Argo CD into a practical deployment workflow.
-
-I learned that DevOps is not just about knowing commands. It is about understanding how components interact, verifying system state, and troubleshooting problems when things do not work as expected.
-
-I'm continuing to build my skills through hands-on projects and progressively more realistic deployment scenarios.
-
-Author: Vicky
-
-Focus: DevOps | AWS | Kubernetes | Docker | GitOps
-
-#DevOps #AWS #Kubernetes #Docker #ArgoCD #GitOps
+#DevOps #AWS #EKS #Kubernetes #Docker #ArgoCD #GitOps
